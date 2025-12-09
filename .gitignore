@@ -15,7 +15,9 @@ __pycache__/
 *.jpg
 *.png
 *.mp3
-
+Jinja2-3.1.2-py3-none-any.whl/
+llvmlite-0.43.0.dev0+17.g622c33f-cp39-cp39-win_amd64.whl/
+numba-0.59.1-cp310-cp310-win_amd64.whl/
 # Virtual environment
 venv/
 .env/
