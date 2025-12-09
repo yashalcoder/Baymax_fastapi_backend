@@ -6,6 +6,16 @@ __pycache__/
 *.db
 *.sqlite3
 
+*.mp4
+*.wav
+*.zip
+*.exe
+*.bin
+*.pdf
+*.jpg
+*.png
+*.mp3
+
 # Virtual environment
 venv/
 .env/
