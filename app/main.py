@@ -22,7 +22,7 @@ import os
 
 # Test karo FFmpeg chal raha hai ya nahi
 def test_ffmpeg():
-    ffmpeg_path = r"C:\Users\Yashal Rafique\Downloads\ffmpeg-8.0.1-essentials_build\ffmpeg-8.0.1-essentials_build\bin\ffmpeg.exe"
+    ffmpeg_path = r"D:\ffmpeg-8.0.1-essentials_build\ffmpeg-8.0.1-essentials_build\bin\ffmpeg.exe"
     
     # Check file exists
     if not os.path.exists(ffmpeg_path):

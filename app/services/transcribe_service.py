@@ -9,6 +9,7 @@ load_dotenv()
 # API Keys
 openai_api_key = os.getenv("OPENAI_API_KEY")
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
+aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 
 client = OpenAI(api_key=openai_api_key)
 
@@ -31,12 +32,16 @@ AudioSegment.ffprobe = os.path.join(FFMPEG_PATH, "ffprobe.exe")
 
 print(f"✓ FFmpeg path set: {AudioSegment.converter}")
 
+
 async def get_doctor_embedding(doctor_id: str):
+    doctor_collection = get_doctor_collection()
+ 
     doctor_collection = get_doctor_collection()
  
     if not ObjectId.is_valid(doctor_id):
         raise Exception(f"Invalid doctor_id: {doctor_id}")
     doctor = await doctor_collection.find_one({"userId": ObjectId(doctor_id)})
+    
     
     if not doctor:
         raise Exception(f"Doctor not found: {doctor_id}")
@@ -46,6 +51,7 @@ async def get_doctor_embedding(doctor_id: str):
         raise Exception(f"No embeddings found for doctor {doctor_id}")
     
     return embeddings
+
 
 async def process_transcription(file: UploadFile = File(...), doctorId: str = None):
     print("\n" + "="*60)

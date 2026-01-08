@@ -11,6 +11,7 @@ async def transcribe_audio(file: UploadFile = File(...),doctorId: str = Form(...
     """
     Uploads audio file → Transcribes → Converts to Urdu → Translates to English
     """
+    print("Received file:", doctorId)
     # Validate file format
     # file="../uploads/urdu_tes2_speaker.wav"
     allowed_formats = {'.flac', '.m4a', '.mp3', '.mp4', '.mpeg', '.mpga', '.oga', '.ogg', '.wav', '.webm'}
