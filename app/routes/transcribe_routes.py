@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
-from app.services.transcribe_service import process_transcription,process_medical_conversation,create_voice_embedding
+from app.services.transcribe_service import process_transcription,process_medical_conversation,create_voice_embedding,preprocess_audio
 from fastapi import Form
 import tempfile
 import json
@@ -50,6 +50,10 @@ async def enroll_doctor(file: UploadFile = File(...)):
         
         try:
             print("\n🎤 Creating voice profile...")
+        #     processed_path = preprocess_audio(temp_path)
+        # embedding = create_voice_embedding(processed_path)
+        
+
             embedding = create_voice_embedding(tmp_path)
             
             return JSONResponse({

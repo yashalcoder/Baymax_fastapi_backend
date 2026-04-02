@@ -3,6 +3,22 @@ from io import BytesIO
 from dotenv import load_dotenv
 from openai import OpenAI
 import assemblyai as aai
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse
+from pydub import AudioSegment
+from app.db import get_db,get_doctor_collection
+from fastapi import Depends
+from bson import ObjectId
+import wave
+import numpy as np
+from scipy.spatial.distance import cosine
+import tempfile
+import json
+from transformers import Wav2Vec2Processor, Wav2Vec2Model
+import torch
+import librosa
+import noisereduce as nr
+from pydub import AudioSegment, effects
 
 load_dotenv()
 
@@ -12,18 +28,6 @@ aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 
 client = OpenAI(api_key=openai_api_key)
-
-# ============================================
-# FastAPI Endpoint Example
-# ============================================
-from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import JSONResponse
-from pydub import AudioSegment
-from app.db import get_db,get_doctor_collection
-from fastapi import Depends
-from bson import ObjectId
-
-# FFmpeg path set karo
 FFMPEG_PATH = r"C:\Users\Yashal Rafique\Downloads\ffmpeg-8.0.1-essentials_build\ffmpeg-8.0.1-essentials_build\bin"
 
 AudioSegment.converter = os.path.join(FFMPEG_PATH, "ffmpeg.exe")
@@ -31,17 +35,22 @@ AudioSegment.ffmpeg = os.path.join(FFMPEG_PATH, "ffmpeg.exe")
 AudioSegment.ffprobe = os.path.join(FFMPEG_PATH, "ffprobe.exe")
 
 print(f"✓ FFmpeg path set: {AudioSegment.converter}")
-
+# Load HuggingFace Wav2Vec2 Model
+print("🔄 Loading HuggingFace Wav2Vec2 model...")
+model_name = "facebook/wav2vec2-base"
+processor = Wav2Vec2Processor.from_pretrained(model_name)
+model = Wav2Vec2Model.from_pretrained(model_name)
+model.eval()
+print("✅ Model loaded successfully!\n")    
 
 async def get_doctor_embedding(doctor_id: str):
     doctor_collection = get_doctor_collection()
  
-    doctor_collection = get_doctor_collection()
  
     if not ObjectId.is_valid(doctor_id):
         raise Exception(f"Invalid doctor_id: {doctor_id}")
     doctor = await doctor_collection.find_one({"userId": ObjectId(doctor_id)})
-    
+    print(f"Doctor data retrieved for ID {doctor_id}: {doctor}")
     
     if not doctor:
         raise Exception(f"Doctor not found: {doctor_id}")
@@ -93,35 +102,16 @@ async def process_transcription(file: UploadFile = File(...), doctorId: str = No
             content={"status": "error", "message": str(e)}
         )
 
-import wave
-import numpy as np
-from scipy.spatial.distance import cosine
-import tempfile
-import json
 
-# HuggingFace imports
-from transformers import Wav2Vec2Processor, Wav2Vec2Model
-import torch
-import librosa
-import noisereduce as nr
-from pydub import AudioSegment, effects
 
-load_dotenv()
 
-# Load HuggingFace Wav2Vec2 Model
-print("🔄 Loading HuggingFace Wav2Vec2 model...")
-model_name = "facebook/wav2vec2-base"
-processor = Wav2Vec2Processor.from_pretrained(model_name)
-model = Wav2Vec2Model.from_pretrained(model_name)
-model.eval()
-print("✅ Model loaded successfully!\n")
 
 
 def preprocess_audio(audio_path: str, trim_silence: bool = True) -> str:
     """Preprocess audio: mono, 16kHz, noise reduction, normalization"""
     try:
         y, sr = librosa.load(audio_path, sr=16000, mono=True)
-        y = nr.reduce_noise(y=y, sr=sr)
+        # y = nr.reduce_noise(y=y, sr=sr)
         y = librosa.util.normalize(y)
         
         temp_fd, temp_path = tempfile.mkstemp(suffix=".wav")
@@ -197,7 +187,7 @@ def compute_similarity(embedding1: list, embedding2: list) -> float:
     return float(max(0.0, min(1.0, similarity)))
 
 
-def verify_speaker(segment_audio_path: str, enrolled_embedding: list, threshold: float = 0.70) -> dict:
+def verify_speaker(segment_audio_path: str, enrolled_embedding: list, threshold: float = 0.40) -> dict:
     """Verify if segment matches enrolled voice"""
     try:
         segment_embedding = create_voice_embedding(segment_audio_path)
@@ -223,7 +213,7 @@ def verify_speaker(segment_audio_path: str, enrolled_embedding: list, threshold:
 async def process_medical_conversation(
     file,
     doctor_voice_embedding: list = None,
-    verification_threshold: float = 0.70
+    verification_threshold: float = 0.40
 ):
     """
     FIXED VERSION - Option 3:
