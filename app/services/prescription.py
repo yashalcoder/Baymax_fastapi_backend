@@ -7,12 +7,7 @@ import re
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 def generatePrescription(patient_info: PatientInfo):
-    """
-    Generates structured JSON with diagnosis, prescription, advice, and disclaimer.
-    Strips code blocks if returned by the model.
-    """
     prompt = f"""
 You are a professional medical doctor.
 
@@ -22,32 +17,40 @@ Patient Information:
 - Severity: {patient_info.severity or "Not specified"}
 - Duration: {patient_info.duration or "Not specified"}
 """
-
     if patient_info.vitals:
         prompt += f"- Vitals: {patient_info.vitals}\n"
 
     if patient_info.medical_report:
-        prompt += f"- Medical Report: {patient_info.medical_report}\n"
+        prompt += f"- Medical History: {patient_info.medical_report}\n"
+
+    # ✅ NEW — Previous reports se context
+    if patient_info.previous_diagnoses:
+        prompt += f"- Previous Diagnoses (from past reports): {patient_info.previous_diagnoses}\n"
+
+    if patient_info.doctor_notes:
+        prompt += f"- Previous Doctor Notes: {patient_info.doctor_notes}\n"
 
     prompt += """
-    TASK:
-    Generate a JSON object with the following keys:
-    - diagnosis: string
-    - prescription: list of medicines, each with:
-        - medicine: string (medicine name only)
-        - type: string
-        - dosage: string (e.g., "100 mg", "80 mg")
-        - duration: string (e.g., "7 days", "once daily for 5 days")  # ✅ clear karo
-        - precautions: string
-    - advice: list of general advice strings
-    - disclaimer: string
+Based on current symptoms AND previous medical history above, generate prescription.
 
-    IMPORTANT: 
-    - duration must be a complete sentence like "once daily for 7 days"
-    - dosage must include units like "mg", "mL", "g"
-    - Do NOT return just a number for duration or dosage
-    - Return ONLY valid JSON, no markdown, no extra text.
-    """
+TASK:
+Generate a JSON object with:
+- diagnosis: string
+- prescription: list of medicines, each with:
+    - medicine: string
+    - type: string
+    - dosage: string (e.g., "100 mg")
+    - duration: string (e.g., "once daily for 7 days")
+    - precautions: string
+- advice: list of strings
+- disclaimer: string
+
+IMPORTANT:
+- Consider previous diagnoses to avoid contradicting medicines
+- If patient has recurring condition, mention it in diagnosis
+- Return ONLY valid JSON, no markdown.
+"""
+
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[

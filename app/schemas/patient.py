@@ -8,3 +8,5 @@ class PatientInfo(BaseModel):
     duration: Optional[str] = None
     vitals: Optional[str] = None
     medical_report: Optional[str] = None
+    previous_diagnoses: str | None = None  # ✅ ADD THIS
+    doctor_notes: str | None = None

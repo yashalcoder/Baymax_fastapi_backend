@@ -91,19 +91,45 @@ async def run_consultation_pipeline(
         # ─────────────────────────────────────
     # STEP 4: Patient DB se allergies/history lo
     # ─────────────────────────────────────
-    print("👤 Step 4: Fetching patient data from DB...")
-    patient_data = await db["users"].find_one(
-        {"userId": ObjectId(patient_id)}
-    )
-    print("Patient Data:", patient_data)  # Debugging line
+   # STEP 4 FIX START
+    patient_data = await db["patients"].find_one({"_id": ObjectId(patient_id)})
+
+    print("📄 Fetching last 3 medical reports...")
+
+    reports_cursor = db["medicalreports"].find(
+        {"patientId": ObjectId(patient_id)}
+    ).sort("createdAt", -1).limit(3)
+
+    reports = await reports_cursor.to_list(length=3)
+    print("Reports found:", len(reports))
+    all_diagnoses = []
+    all_notes = []
+
+    for report in reports:
+        extracted_data = report.get("extractedData", {})
+
+        # diagnoses (list)
+        diagnoses = extracted_data.get("diagnoses", [])
+        all_diagnoses.extend(diagnoses)
+
+        # doctor_notes (list OR string)
+        notes = extracted_data.get("doctor_notes", [])
+        
+        if isinstance(notes, list):
+            all_notes.extend(notes)
+        elif isinstance(notes, str):
+            all_notes.append(notes)
     medical_report = None
+
     if patient_data:
         medical_report = (
             f"Blood Group: {patient_data.get('bloodGroup', 'N/A')}, "
             f"Allergies: {patient_data.get('allergies', 'None')}, "
             f"Major Disease: {patient_data.get('majorDisease', 'None')}"
-        )
-    
+    )
+    previous_diagnoses_str = ", ".join(set(all_diagnoses)) if all_diagnoses else None
+    doctor_notes_str = " | ".join(set(all_notes)) if all_notes else None
+            
     # Latest vitals lo
     vitals_str = None
     vitals_list = patient_data.get("vitals", []) if patient_data else []
@@ -124,8 +150,10 @@ async def run_consultation_pipeline(
         severity=extracted.get("severity"),
         duration=extracted.get("duration"),
         vitals=vitals_str,
-        medical_report=medical_report
-    )
+        medical_report=medical_report,
+        previous_diagnoses=previous_diagnoses_str,
+        doctor_notes=doctor_notes_str, 
+    ) 
 
     # ─────────────────────────────────────
     # STEP 6: Prescription generate karo
