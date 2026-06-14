@@ -5,5 +5,6 @@ from app.services.prescription import generatePrescription
 router = APIRouter()
 
 @router.post("/prescription")
-def generatePrescriptionAPI(patient_info: PatientInfo):
-    return generatePrescription(patient_info)
+async def generatePrescriptionAPI(patient_info: PatientInfo):
+    return await generatePrescription(patient_info)
+

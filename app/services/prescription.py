@@ -1,13 +1,14 @@
 import os
 import json
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import AsyncOpenAI
 from app.schemas.patient import PatientInfo
 import re
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-def generatePrescription(patient_info: PatientInfo):
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+async def generatePrescription(patient_info: PatientInfo):
     prompt = f"""
 You are a professional medical doctor.
 
@@ -51,7 +52,7 @@ IMPORTANT:
 - Return ONLY valid JSON, no markdown.
 """
 
-    response = client.chat.completions.create(
+    response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are an experienced licensed physician."},

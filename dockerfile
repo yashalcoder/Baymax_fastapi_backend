@@ -1,6 +1,11 @@
 # Use official Python image
 FROM python:3.11-slim
 
+# Install system dependencies (ffmpeg)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 

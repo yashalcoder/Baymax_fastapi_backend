@@ -1,8 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import transcribe_routes, symptom_routes,prescription,consultation
+from app.routes import transcribe_routes, symptom_routes, prescription, consultation
 from app.services.symptom_extraction import load_models
+from app.services.transcribe_service import load_transcribe_models
 from app.db import connect_to_mongo, close_mongo_connection, get_doctor_collection
+from app.config import FFMPEG_DIR
+
+import sys
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
 
 import subprocess
 import os
@@ -19,7 +28,7 @@ app.add_middleware(
 
 # ---------------- FFmpeg Test ----------------
 def test_ffmpeg():
-    ffmpeg_path = r"C:\Users\yasha\Downloads\ffmpeg-8.0.1-essentials_build\ffmpeg-8.0.1-essentials_build\bin\ffmpeg.exe"
+    ffmpeg_path = os.path.join(FFMPEG_DIR, "ffmpeg.exe")
 
     if not os.path.exists(ffmpeg_path):
         print(f"❌ FFmpeg NOT FOUND: {ffmpeg_path}")
@@ -46,6 +55,7 @@ async def startup_app():
 
     test_ffmpeg()           # safe place
     load_models()           # load ONCE
+    load_transcribe_models()  # load ONCE
     await connect_to_mongo()
 
     print("✅ Startup completed")

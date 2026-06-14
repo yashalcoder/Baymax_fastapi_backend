@@ -12,6 +12,7 @@
 import re
 import os
 import spacy
+import spacy.cli
 from transformers import AutoTokenizer, AutoModel
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
@@ -25,8 +26,22 @@ def load_models():
     global nlp, tokenizer, model
 
     print("🔄 Loading SciSpacy...")
-    model_path="./models/en_ner_bc5cdr_md-0.5.4"
-    nlp = spacy.load(model_path)
+    try:
+        nlp = spacy.load("en_ner_bc5cdr_md")
+    except OSError:
+        print("Model 'en_ner_bc5cdr_md' not found. Installing from official source...")
+        try:
+            spacy.cli.download("https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_ner_bc5cdr_md-0.5.4.tar.gz")
+            nlp = spacy.load("en_ner_bc5cdr_md")
+        except Exception as e:
+            print(f"❌ Failed to download model dynamically: {e}")
+            # Try loading from local path if it exists as fallback
+            model_path="./models/en_ner_bc5cdr_md-0.5.4"
+            if os.path.exists(model_path):
+                print("⚠️ Falling back to local model path")
+                nlp = spacy.load(model_path)
+            else:
+                raise e
     print("✅ SciSpacy loaded")
 
 
