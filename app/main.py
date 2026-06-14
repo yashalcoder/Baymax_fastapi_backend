@@ -53,10 +53,10 @@ def test_ffmpeg():
 async def startup_app():
     print("🚀 Starting BayMax Backend...")
 
-    test_ffmpeg()           # safe place
-    load_models()           # load ONCE
-    load_transcribe_models()  # load ONCE
-    await connect_to_mongo()
+    # test_ffmpeg()           # safe place
+    # load_models()           # load ONCE
+    # load_transcribe_models()  # load ONCE
+    # await connect_to_mongo()
 
     print("✅ Startup completed")
 
