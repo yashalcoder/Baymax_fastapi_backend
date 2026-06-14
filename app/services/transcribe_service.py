@@ -85,8 +85,8 @@ async def get_doctor_embedding(doctor_id: str):
  
     if not ObjectId.is_valid(doctor_id):
         raise Exception(f"Invalid doctor_id: {doctor_id}")
-    # doctor = await doctor_collection.find_one({"userId": ObjectId(doctor_id)}) #this is for wehn i will run full project
-    doctor = await doctor_collection.find_one({"_id": ObjectId(doctor_id)}) # this is for testing only when i will run this file independently fastapi alone
+    doctor = await doctor_collection.find_one({"userId": ObjectId(doctor_id)}) #this is for wehn i will run full project
+    # doctor = await doctor_collection.find_one({"_id": ObjectId(doctor_id)}) # this is for testing only when i will run this file independently fastapi alone
     
     print(f"Doctor data retrieved for ID {doctor_id}: {doctor}")
     
